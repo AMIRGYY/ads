@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ثبت تبلیغات - روزیک</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Tahoma', 'Vazir', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            color: #fff;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.07);
+            color: #fff;
+            font-size: 1rem;
+            transition: 0.3s;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: #6c63ff;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 20px rgba(108, 99, 255, 0.2);
+        }
+
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #6c63ff, #3f3d9e);
+            border: none;
+            border-radius: 14px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(108, 99, 255, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b, #c0392b);
+        }
+
+        .btn-danger:hover {
+            box-shadow: 0 15px 35px rgba(255, 107, 107, 0.4);
+        }
+
+        .admin-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 999;
+        }
+
+        .admin-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: #1e1e2f;
+            border-radius: 30px;
+            padding: 35px;
+            max-width: 1000px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal h2 {
+            color: #fff;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .modal-close {
+            float: left;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 0, 0, 0.3);
+        }
+
+        .login-box {
+            display: none;
+        }
+
+        .login-box.active {
+            display: block;
+        }
+
+        .admin-panel {
+            display: none;
+        }
+
+        .admin-panel.active {
+            display: block;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        th,
+        td {
+            padding: 10px 8px;
+            text-align: right;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        th {
+            background: rgba(108, 99, 255, 0.2);
+            color: #a8a4ff;
+            position: sticky;
+            top: 0;
+        }
+
+        .badge-count {
+            background: #6c63ff;
+            color: #fff;
+            border-radius: 50%;
+            padding: 2px 12px;
+            font-size: 0.8rem;
+            margin-right: 6px;
+        }
+
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 28px;
+            border-radius: 14px;
+            color: #fff;
+            font-weight: 600;
+            z-index: 2000;
+            opacity: 0;
+            transform: translateY(-20px);
+            transition: 0.4s;
+            backdrop-filter: blur(10px);
+            max-width: 90%;
+        }
+
+        .toast.success {
+            background: rgba(0, 184, 148, 0.9);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .toast.error {
+            background: rgba(255, 71, 87, 0.9);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .delete-btn {
+            background: rgba(255, 71, 87, 0.3);
+            border: 1px solid rgba(255, 71, 87, 0.5);
+            color: #ff6b6b;
+            padding: 4px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 0.8rem;
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 71, 87, 0.6);
+            color: #fff;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #6c63ff;
+            animation: spin 0.8s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            .admin-btn {
+                bottom: 15px;
+                left: 15px;
+                padding: 12px 20px;
+                font-size: 0.85rem;
+            }
+            .modal {
+                padding: 20px;
+            }
+            th,
+            td {
+                font-size: 0.7rem;
+                padding: 6px 4px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast"></div>
+
+    <div class="container">
+        <h1>📢 ثبت تبلیغات</h1>
+        <p class="subtitle">سایت روزیک · اطلاعات خود را وارد کنید</p>
+
+        <form id="adForm">
+            <div class="form-group">
+                <label>📧 ایمیل</label>
+                <input type="email" id="email" placeholder="example@gmail.com" required />
+            </div>
+            <div class="form-group">
+                <label>🆔 آیدی تلگرام</label>
+                <input type="text" id="telegram" placeholder="@your_username" required />
+            </div>
+            <div class="form-group">
+                <label>🆔 آیدی روبیکا</label>
+                <input type="text" id="rubika" placeholder="@your_rubika_id" required />
+            </div>
+            <div class="form-group">
+                <label>👤 نام و نام خانوادگی</label>
+                <input type="text" id="fullname" placeholder="علی محمدی" required />
+            </div>
+            <div class="form-group">
+                <label>📱 شماره تلفن</label>
+                <input type="tel" id="phone" placeholder="0912 345 6789" required />
+            </div>
+            <div class="form-group">
+                <label>📦 نام محصول / خدمات</label>
+                <input type="text" id="product" placeholder="دوره آموزش برنامه‌نویسی" required />
+            </div>
+            <div class="form-group">
+                <label>🔗 لینک محصول</label>
+                <input type="url" id="link" placeholder="https://example.com/product" required />
+            </div>
+            <button type="submit" class="btn" id="submitBtn">🚀 ثبت تبلیغات</button>
+        </form>
+    </div>
+
+    <button class="admin-btn" id="adminToggleBtn">🔐 پنل مدیریت</button>
+
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal">
+            <button class="modal-close" id="closeAdminModal">✕</button>
+            <h2>👑 پنل مدیریت</h2>
+
+            <div class="login-box" id="loginBox">
+                <div class="form-group">
+                    <label>🔑 رمز عبور</label>
+                    <input type="password" id="adminPassword" placeholder="رمز را وارد کنید" />
+                </div>
+                <button class="btn" id="loginBtn">ورود به پنل</button>
+            </div>
+
+            <div class="admin-panel" id="adminPanel">
+                <p style="color:rgba(255,255,255,0.6); margin-bottom:10px;">
+                    📋 لیست تبلیغات
+                    <span class="badge-count" id="countBadge">0</span>
+                </p>
+                <button class="btn" id="refreshBtn" style="padding:10px; font-size:0.9rem; background:#3f3d9e; margin-bottom:15px;">
+                    🔄 بروزرسانی
+                </button>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>نام</th>
+                                <th>ایمیل</th>
+                                <th>تلگرام</th>
+                                <th>روبیکا</th>
+                                <th>تلفن</th>
+                                <th>محصول</th>
+                                <th>لینک</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody">
+                            <tr><td colspan="9" style="text-align:center; color:rgba(255,255,255,0.4);">در حال بارگذاری...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-danger" id="clearAllBtn" style="margin-top:15px; padding:12px;">
+                    🗑️ حذف همه تبلیغات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  تنظیمات JSONBin API - ✅ تنظیم شده با اطلاعات شما
+        // ============================================================
+        const JSONBIN_BIN_ID = '6a5a57edda38895dfe6bb757';
+        const JSONBIN_API_KEY = '$2a$10$Y3uJQT23PdFg655lRv2f7eHwQeHurCL6FhUqAgahVxZBKOKaowlWG';
+        const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+        // ============================================================
+        //  متغیرهای عمومی
+        // ============================================================
+        let allRecords = [];
+        let clickCount = 0;
+        let clickTimeout = null;
+
+        const form = document.getElementById('adForm');
+        const toast = document.getElementById('toast');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // ============================================================
+        //  نمایش پیام
+        // ============================================================
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = 'toast ' + type;
+            clearTimeout(toast._timeout);
+            toast._timeout = setTimeout(() => {
+                toast.className = 'toast';
+            }, 4000);
+        }
+
+        // ============================================================
+        //  خواندن داده‌ها از JSONBin
+        // ============================================================
+        async function fetchData() {
+            try {
+                const response = await fetch(JSONBIN_URL, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_API_KEY
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                return result.record?.ads || [];
+            } catch (error) {
+                console.error('خطا در خواندن داده:', error);
+                showToast('❌ خطا در ارتباط با سرور JSONBin', 'error');
+                return [];
+            }
+        }
+
+        // ============================================================
+        //  ذخیره داده‌ها در JSONBin
+        // ============================================================
+        async function saveData(adsData) {
+            try {
+                const dataToSave = { ads: adsData };
+
+                const response = await fetch(JSONBIN_URL, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': JSONBIN_API_KEY
+                    },
+                    body: JSON.stringify(dataToSave)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                return true;
+            } catch (error) {
+                console.error('خطا در ذخیره داده:', error);
+                showToast('❌ خطا در ذخیره در JSONBin', 'error');
+                return false;
+            }
+        }
+
+        // ============================================================
+        //  ثبت تبلیغات جدید
+        // ============================================================
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const newAd = {
+                id: Date.now(),
+                email: document.getElementById('email').value.trim(),
+                telegram: document.getElementById('telegram').value.trim(),
+                rubika: document.getElementById('rubika').value.trim(),
+                fullname: document.getElementById('fullname').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                product: document.getElementById('product').value.trim(),
+                link: document.getElementById('link').value.trim(),
+                created_at: new Date().toLocaleString('fa-IR')
+            };
+
+            for (let key in newAd) {
+                if (key !== 'id' && key !== 'created_at' && !newAd[key]) {
+                    showToast('❌ لطفاً تمام فیلدها را پر کنید.', 'error');
+                    return;
+                }
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '⏳ در حال ثبت...';
+
+            let currentData = await fetchData();
+            if (!Array.isArray(currentData)) {
+                currentData = [];
+            }
+
+            currentData.push(newAd);
+
+            const saved = await saveData(currentData);
+
+            if (saved) {
+                showToast('✅ تبلیغات با موفقیت ثبت شد!', 'success');
+                form.reset();
+                if (document.getElementById('adminPanel').classList.contains('active')) {
+                    await loadAdminData();
+                }
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '🚀 ثبت تبلیغات';
+        });
+
+        // ============================================================
+        //  پنل مدیریت با ۴ کلیک
+        // ============================================================
+        const adminToggleBtn = document.getElementById('adminToggleBtn');
+        const adminModal = document.getElementById('adminModal');
+        const closeAdminModal = document.getElementById('closeAdminModal');
+        const loginBox = document.getElementById('loginBox');
+        const adminPanel = document.getElementById('adminPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const adminPassword = document.getElementById('adminPassword');
+        const adminTableBody = document.getElementById('adminTableBody');
+        const countBadge = document.getElementById('countBadge');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+
+        adminToggleBtn.addEventListener('click', () => {
+            clickCount++;
+            if (clickCount === 4) {
+                clickCount = 0;
+                if (clickTimeout) clearTimeout(clickTimeout);
+                adminModal.classList.add('active');
+                loginBox.classList.add('active');
+                adminPanel.classList.remove('active');
+                adminPassword.value = '';
+                checkAdminSession();
+            } else {
+                clearTimeout(clickTimeout);
+                clickTimeout = setTimeout(() => { clickCount = 0; }, 2000);
+            }
+        });
+
+        closeAdminModal.addEventListener('click', () => adminModal.classList.remove('active'));
+        adminModal.addEventListener('click', (e) => {
+            if (e.target === adminModal) adminModal.classList.remove('active');
+        });
+
+        // ============================================================
+        //  ورود به پنل
+        // ============================================================
+        loginBtn.addEventListener('click', () => {
+            if (adminPassword.value.trim() === '2025') {
+                sessionStorage.setItem('admin_logged', 'true');
+                loginBox.classList.remove('active');
+                adminPanel.classList.add('active');
+                loadAdminData();
+                showToast('✅ ورود موفق', 'success');
+            } else {
+                showToast('❌ رمز اشتباه است!', 'error');
+            }
+        });
+
+        adminPassword.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') loginBtn.click();
+        });
+
+        // ============================================================
+        //  بررسی نشست
+        // ============================================================
+        function checkAdminSession() {
+            if (sessionStorage.getItem('admin_logged') === 'true') {
+                loginBox.classList.remove('active');
+                adminPanel.classList.add('active');
+                loadAdminData();
+            } else {
+                loginBox.classList.add('active');
+                adminPanel.classList.remove('active');
+            }
+        }
+
+        // ============================================================
+        //  بارگذاری داده‌ها در پنل مدیریت
+        // ============================================================
+        async function loadAdminData() {
+            adminTableBody.innerHTML = `
+                <tr>
+                    <td colspan="9" style="text-align:center; color:rgba(255,255,255,0.4);">
+                        <span class="loading"></span> در حال بارگذاری...
+                    </td>
+                </tr>
+            `;
+
+            const data = await fetchData();
+
+            if (Array.isArray(data) && data.length > 0) {
+                allRecords = data;
+                renderTable(data);
+                countBadge.textContent = data.length;
+            } else {
+                adminTableBody.innerHTML =
+                    `<tr><td colspan="9" style="text-align:center; color:rgba(255,255,255,0.4);">📭 هیچ تبلیغی ثبت نشده است.</td></tr>`;
+                countBadge.textContent = '0';
+                allRecords = [];
+            }
+        }
+
+        // ============================================================
+        //  رندر جدول
+        // ============================================================
+        function renderTable(records) {
+            if (!records || records.length === 0) {
+                adminTableBody.innerHTML =
+                    `<tr><td colspan="9" style="text-align:center; color:rgba(255,255,255,0.4);">📭 هیچ تبلیغی ثبت نشده است.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            records.forEach((item, index) => {
+                const itemId = item.id || index;
+                html += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${escapeHtml(item.fullname)}</td>
+                        <td>${escapeHtml(item.email)}</td>
+                        <td>${escapeHtml(item.telegram)}</td>
+                        <td>${escapeHtml(item.rubika)}</td>
+                        <td>${escapeHtml(item.phone)}</td>
+                        <td>${escapeHtml(item.product)}</td>
+                        <td><a href="${escapeHtml(item.link)}" target="_blank" style="color:#6c63ff; text-decoration:underline;">لینک</a></td>
+                        <td>
+                            <button class="delete-btn" onclick="deleteRecord(${itemId})">🗑️</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            adminTableBody.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '-';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ============================================================
+        //  حذف یک رکورد
+        // ============================================================
+        window.deleteRecord = async function(id) {
+            if (!confirm('⚠️ آیا از حذف این تبلیغ مطمئن هستید؟')) return;
+
+            const newData = allRecords.filter(item => item.id !== id);
+
+            if (newData.length === allRecords.length) {
+                showToast('❌ رکورد یافت نشد', 'error');
+                return;
+            }
+
+            const saved = await saveData(newData);
+
+            if (saved) {
+                showToast('✅ رکورد با موفقیت حذف شد', 'success');
+                allRecords = newData;
+                renderTable(newData);
+                countBadge.textContent = newData.length;
+            }
+        };
+
+        // ============================================================
+        //  حذف همه رکوردها
+        // ============================================================
+        clearAllBtn.addEventListener('click', async () => {
+            if (!confirm('⚠️ آیا از حذف همه تبلیغات مطمئن هستید؟ این کار قابل بازگشت نیست!')) return;
+
+            const saved = await saveData([]);
+
+            if (saved) {
+                showToast('✅ همه تبلیغات حذف شدند', 'success');
+                allRecords = [];
+                renderTable([]);
+                countBadge.textContent = '0';
+            }
+        });
+
+        // ============================================================
+        //  بروزرسانی
+        // ============================================================
+        refreshBtn.addEventListener('click', () => {
+            if (sessionStorage.getItem('admin_logged') === 'true') {
+                loadAdminData();
+                showToast('🔄 بروزرسانی شد', 'success');
+            } else {
+                showToast('❌ ابتدا وارد پنل شوید', 'error');
+            }
+        });
+
+        // ============================================================
+        //  بارگذاری اولیه
+        // ============================================================
+        console.log('✅ سیستم ثبت تبلیغات روزیک');
+        console.log('🔐 برای ورود به پنل، ۴ بار روی دکمه کلیک کنید.');
+        console.log('📌 Bin ID:', JSONBIN_BIN_ID);
+    </script>
+
+</body>
+</html>
