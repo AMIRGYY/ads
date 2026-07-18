@@ -426,6 +426,23 @@
             flex: 1;
             min-width: 100px;
         }
+        .text-center {
+            text-align: center;
+        }
+        .text-muted {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        .mt-10 {
+            margin-top: 10px;
+        }
+        .mt-20 {
+            margin-top: 20px;
+        }
+        .flex {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
         @media (max-width: 600px) {
             .app {
                 padding: 18px;
@@ -513,8 +530,8 @@
                 </div>
 
                 <div class="card-box">
-                    <div class="card-number">6037-9915-4277-0809</div>
-                    <div class="card-owner">به نام امیر </div>
+                    <div class="card-number">۶۰۳۷۹۹ ۱۵۴۲۷۷ ۰۸۰۹</div>
+                    <div class="card-owner">به نام امیر محمدی</div>
                     <div style="font-size:0.8rem; color:rgba(255,255,255,0.5); margin-top:5px;">
                         لطفاً مبلغ را به این شماره کارت واریز کنید
                     </div>
@@ -617,19 +634,21 @@
 
     <script>
         // ============================================================
-        //  تنظیمات JSONBin
+        //  ✅ کلیدهای جدید شما
         // ============================================================
-        const JSONBIN_BIN_ID = '6a5a57edda38895dfe6bb757';
-        const JSONBIN_API_KEY = '$2a$10$Y3uJQT23PdFg655lRv2f7eHwQeHurCL6FhUqAgahVxZBKOKaowlWG';
+        const JSONBIN_BIN_ID = '6a5b9d18f5f4af5e29a100c7';
+        const JSONBIN_API_KEY = '$2a$10$R//ii8F7o9rWYfdOG8Un7ObJJB4VBryAIn74PgtJgpRVL9yBFtHaq';
         const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${JSONBIN_BIN_ID}`;
+
+        console.log('📌 JSONBin URL:', JSONBIN_URL);
+        console.log('✅ سیستم با کلیدهای جدید راه‌اندازی شد');
 
         // ============================================================
         //  متغیرها
         // ============================================================
         let allAds = [];
-        let allCodes = [];
         let timerIntervals = {};
-        let adminClickCount = 0;
+        let clickCount = 0;
         let clickTimeout = null;
 
         const $ = id => document.getElementById(id);
@@ -646,42 +665,71 @@
         }
 
         // ============================================================
-        //  خواندن داده از JSONBin با مدیریت خطا
+        //  خواندن داده از JSONBin
         // ============================================================
         async function fetchData() {
             try {
-                const res = await fetch(JSONBIN_URL, {
-                    headers: { 'X-Master-Key': JSONBIN_API_KEY }
+                console.log('🔄 اتصال به JSONBin...');
+
+                const response = await fetch(JSONBIN_URL, {
+                    headers: {
+                        'X-Master-Key': JSONBIN_API_KEY
+                    }
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    console.error('❌ پاسخ سرور:', res.status, errorText);
-                    throw new Error(`HTTP ${res.status}: ${errorText}`);
+                console.log('📡 وضعیت پاسخ:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ پاسخ خطا:', errorText);
+
+                    let userMsg = '❌ خطا در ارتباط با سرور: ';
+                    if (response.status === 401) {
+                        userMsg += 'کلید API معتبر نیست. یک کلید جدید از JSONBin بگیرید.';
+                    } else if (response.status === 404) {
+                        userMsg += 'Bin ID پیدا نشد. آدرس Bin خود را بررسی کنید.';
+                    } else if (response.status === 429) {
+                        userMsg += 'تعداد درخواست‌ها زیاد شد. چند دقیقه صبر کنید.';
+                    } else {
+                        userMsg += `کد خطا ${response.status}`;
+                    }
+                    showToast(userMsg, 'error');
+                    return { ads: [], usedCodes: [] };
                 }
 
-                const json = await res.json();
+                const json = await response.json();
                 console.log('✅ داده دریافت شد:', json);
 
-                // اگر داده خالی بود یا ساختار نداشت، مقدار پیش‌فرض برگردان
-                if (!json.record || typeof json.record !== 'object') {
+                if (!json.record) {
                     return { ads: [], usedCodes: [] };
                 }
 
                 return json.record;
-            } catch (e) {
-                console.error('❌ خطا در fetchData:', e);
-                showToast('❌ خطا در ارتباط با سرور: ' + e.message, 'error');
+
+            } catch (error) {
+                console.error('❌ خطای کامل:', error);
+
+                let userMsg = '❌ خطا در ارتباط با سرور: ';
+                if (error.message.includes('Failed to fetch')) {
+                    userMsg += 'اینترنت خود را بررسی کنید یا VPN را خاموش کنید.';
+                } else if (error.message.includes('NetworkError')) {
+                    userMsg += 'مشکل در شبکه. اتصال اینترنت را بررسی کنید.';
+                } else {
+                    userMsg += error.message;
+                }
+                showToast(userMsg, 'error');
                 return { ads: [], usedCodes: [] };
             }
         }
 
         // ============================================================
-        //  ذخیره داده در JSONBin با مدیریت خطا
+        //  ذخیره داده در JSONBin
         // ============================================================
         async function saveData(data) {
             try {
-                const res = await fetch(JSONBIN_URL, {
+                console.log('🔄 در حال ذخیره در JSONBin...');
+
+                const response = await fetch(JSONBIN_URL, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -690,18 +738,21 @@
                     body: JSON.stringify(data)
                 });
 
-                if (!res.ok) {
-                    const errorText = await res.text();
-                    console.error('❌ خطا در ذخیره:', res.status, errorText);
-                    throw new Error(`HTTP ${res.status}: ${errorText}`);
+                console.log('📡 وضعیت ذخیره:', response.status);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ خطا در ذخیره:', errorText);
+                    showToast('❌ خطا در ذخیره داده: ' + response.status, 'error');
+                    return false;
                 }
 
-                const result = await res.json();
-                console.log('✅ ذخیره شد:', result);
+                console.log('✅ ذخیره موفق');
                 return true;
-            } catch (e) {
-                console.error('❌ خطا در saveData:', e);
-                showToast('❌ خطا در ذخیره داده: ' + e.message, 'error');
+
+            } catch (error) {
+                console.error('❌ خطا در ذخیره:', error);
+                showToast('❌ خطا در ذخیره: اینترنت را بررسی کنید', 'error');
                 return false;
             }
         }
@@ -825,7 +876,6 @@
             submitBtn.innerHTML = '⏳ در حال ثبت...';
 
             try {
-                // جمع‌آوری داده‌ها
                 const fullname = $('fullname').value.trim();
                 const email = $('email').value.trim();
                 const telegram = $('telegram').value.trim();
@@ -837,7 +887,6 @@
                 const amount = calcAmount(hours);
                 const method = $('receiptMethod').value;
 
-                // اعتبارسنجی
                 if (!fullname || !email || !telegram || !rubika || !phone || !product || !link) {
                     showToast('❌ لطفاً تمام فیلدها را پر کنید.', 'error');
                     submitBtn.disabled = false;
@@ -851,12 +900,10 @@
                     return;
                 }
 
-                // دریافت داده‌های موجود
                 const data = await fetchData();
                 const ads = data.ads || [];
                 const usedCodes = data.usedCodes || [];
 
-                // تولید کد یکتا
                 const code = generateUniqueCode(usedCodes);
                 if (!code) {
                     showToast('❌ خطا در تولید کد، دوباره تلاش کنید.', 'error');
@@ -865,7 +912,6 @@
                     return;
                 }
 
-                // ساخت رکورد جدید
                 const newAd = {
                     id: Date.now() + Math.random() * 1000,
                     code: code,
@@ -892,7 +938,6 @@
                 ads.push(newAd);
                 usedCodes.push(code);
 
-                // ذخیره
                 const saved = await saveData({ ads, usedCodes });
 
                 if (saved) {
@@ -910,9 +955,10 @@
                 } else {
                     showToast('❌ خطا در ثبت، دوباره تلاش کنید.', 'error');
                 }
-            } catch (err) {
-                console.error('❌ خطای غیرمنتظره:', err);
-                showToast('❌ خطای غیرمنتظره: ' + err.message, 'error');
+
+            } catch (error) {
+                console.error('❌ خطا در ثبت:', error);
+                showToast('❌ خطا در ثبت: ' + error.message, 'error');
             }
 
             submitBtn.disabled = false;
@@ -929,84 +975,79 @@
                 return;
             }
 
-            try {
-                const data = await fetchData();
-                const ads = data.ads || [];
-                const found = ads.filter(a =>
-                    a.code === input ||
-                    a.email.toLowerCase() === input.toLowerCase()
-                );
+            const data = await fetchData();
+            const ads = data.ads || [];
+            const found = ads.filter(a =>
+                a.code === input ||
+                a.email.toLowerCase() === input.toLowerCase()
+            );
 
-                const container = $('trackResult');
-                if (found.length === 0) {
-                    container.innerHTML =
-                        `<div style="background:rgba(255,71,87,0.1); border-radius:14px; padding:20px; text-align:center; color:rgba(255,255,255,0.6);">
-                            ❌ هیچ تبلیغی با این مشخصات یافت نشد.
-                        </div>`;
-                    return;
-                }
-
-                let html = '';
-                found.forEach((ad, idx) => {
-                    const statusText = {
-                        pending: 'در انتظار تایید',
-                        approved: 'تایید شده، در صف',
-                        active: 'فعال',
-                        expired: 'منقضی شده'
-                    } [ad.status] || ad.status;
-
-                    const badgeClass = {
-                        pending: 'status-pending',
-                        approved: 'status-approved',
-                        active: 'status-active',
-                        expired: 'status-expired'
-                    } [ad.status] || 'status-pending';
-
-                    html += `
-                        <div class="track-box" style="margin-top:${idx>0?'15px':0};">
-                            <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
-                                <strong>کد: ${ad.code}</strong>
-                                <span class="status-badge ${badgeClass}">${statusText}</span>
-                            </div>
-                            <div style="margin-top:8px; font-size:0.9rem; color:rgba(255,255,255,0.7);">
-                                <div>محصول: ${ad.product}</div>
-                                <div>مدت: ${ad.hours} ساعت — مبلغ: ${ad.amount.toLocaleString()} تومان</div>
-                                <div>ثبت: ${new Date(ad.created_at).toLocaleString('fa-IR')}</div>
-                                ${ad.approved_at ? `<div>تایید: ${new Date(ad.approved_at).toLocaleString('fa-IR')}</div>` : ''}
-                                ${ad.notify_message ? `<div style="color:#ffd700; margin-top:5px;">📢 ${ad.notify_message}</div>` : ''}
-                            </div>
-                            ${ad.status === 'active' && ad.end_time ? `
-                                <div class="timer-box" id="timer-${ad.code}">
-                                    ⏳ محاسبه...
-                                </div>
-                                <script>
-                                    startTimer('${ad.code}', ${new Date(ad.end_time).getTime()});
-                                <\/script>
-                            ` : ''}
-                            ${ad.status === 'expired' && ad.end_time ? `
-                                <div style="color:#636e72; text-align:center; padding:8px; background:rgba(0,0,0,0.2); border-radius:10px; margin-top:8px;">
-                                    ⏰ این تبلیغ در ${new Date(ad.end_time).toLocaleString('fa-IR')} به پایان رسید.
-                                </div>
-                            ` : ''}
-                            ${ad.status === 'pending' ? `
-                                <div style="color:#f39c12; text-align:center; padding:8px; background:rgba(243,156,18,0.1); border-radius:10px; margin-top:8px;">
-                                    ⏳ در انتظار تایید مدیر
-                                </div>
-                            ` : ''}
-                            ${ad.status === 'approved' ? `
-                                <div style="color:#00b894; text-align:center; padding:8px; background:rgba(0,184,148,0.1); border-radius:10px; margin-top:8px;">
-                                    ✅ تایید شده، به زودی فعال می‌شود
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                });
-
-                container.innerHTML = html;
-            } catch (err) {
-                console.error('❌ خطا در پیگیری:', err);
-                showToast('❌ خطا در پیگیری: ' + err.message, 'error');
+            const container = $('trackResult');
+            if (found.length === 0) {
+                container.innerHTML =
+                    `<div style="background:rgba(255,71,87,0.1); border-radius:14px; padding:20px; text-align:center; color:rgba(255,255,255,0.6);">
+                    ❌ هیچ تبلیغی با این مشخصات یافت نشد.
+                </div>`;
+                return;
             }
+
+            let html = '';
+            found.forEach((ad, idx) => {
+                const statusText = {
+                    pending: 'در انتظار تایید',
+                    approved: 'تایید شده، در صف',
+                    active: 'فعال',
+                    expired: 'منقضی شده'
+                } [ad.status] || ad.status;
+
+                const badgeClass = {
+                    pending: 'status-pending',
+                    approved: 'status-approved',
+                    active: 'status-active',
+                    expired: 'status-expired'
+                } [ad.status] || 'status-pending';
+
+                html += `
+                    <div class="track-box" style="margin-top:${idx>0?'15px':0};">
+                        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                            <strong>کد: ${ad.code}</strong>
+                            <span class="status-badge ${badgeClass}">${statusText}</span>
+                        </div>
+                        <div style="margin-top:8px; font-size:0.9rem; color:rgba(255,255,255,0.7);">
+                            <div>محصول: ${ad.product}</div>
+                            <div>مدت: ${ad.hours} ساعت — مبلغ: ${ad.amount.toLocaleString()} تومان</div>
+                            <div>ثبت: ${new Date(ad.created_at).toLocaleString('fa-IR')}</div>
+                            ${ad.approved_at ? `<div>تایید: ${new Date(ad.approved_at).toLocaleString('fa-IR')}</div>` : ''}
+                            ${ad.notify_message ? `<div style="color:#ffd700; margin-top:5px;">📢 ${ad.notify_message}</div>` : ''}
+                        </div>
+                        ${ad.status === 'active' && ad.end_time ? `
+                            <div class="timer-box" id="timer-${ad.code}">
+                                ⏳ محاسبه...
+                            </div>
+                            <script>
+                                startTimer('${ad.code}', ${new Date(ad.end_time).getTime()});
+                            <\/script>
+                        ` : ''}
+                        ${ad.status === 'expired' && ad.end_time ? `
+                            <div style="color:#636e72; text-align:center; padding:8px; background:rgba(0,0,0,0.2); border-radius:10px; margin-top:8px;">
+                                ⏰ این تبلیغ در ${new Date(ad.end_time).toLocaleString('fa-IR')} به پایان رسید.
+                            </div>
+                        ` : ''}
+                        ${ad.status === 'pending' ? `
+                            <div style="color:#f39c12; text-align:center; padding:8px; background:rgba(243,156,18,0.1); border-radius:10px; margin-top:8px;">
+                                ⏳ در انتظار تایید مدیر
+                            </div>
+                        ` : ''}
+                        ${ad.status === 'approved' ? `
+                            <div style="color:#00b894; text-align:center; padding:8px; background:rgba(0,184,148,0.1); border-radius:10px; margin-top:8px;">
+                                ✅ تایید شده، به زودی فعال می‌شود
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
         });
 
         // ============================================================
@@ -1047,6 +1088,7 @@
         // ============================================================
         //  پنل مدیریت (۴ کلیک)
         // ============================================================
+        let adminClickCount = 0;
         $('adminToggleBtn').addEventListener('click', () => {
             adminClickCount++;
             if (adminClickCount === 4) {
@@ -1108,70 +1150,64 @@
             tbody.innerHTML =
                 `<tr><td colspan="10" style="text-align:center; color:rgba(255,255,255,0.4);"><span class="loading"></span> در حال بارگذاری...</td></tr>`;
 
-            try {
-                const data = await fetchData();
-                const ads = data.ads || [];
-                allAds = ads;
+            const data = await fetchData();
+            const ads = data.ads || [];
+            allAds = ads;
 
-                if (ads.length === 0) {
-                    tbody.innerHTML =
-                        `<tr><td colspan="10" style="text-align:center; color:rgba(255,255,255,0.4);">📭 هیچ تبلیغی ثبت نشده است.</td></tr>`;
-                    $('adminCount').textContent = '0';
-                    return;
-                }
-
-                ads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-                let html = '';
-                ads.forEach((ad, idx) => {
-                    const statusText = {
-                        pending: 'در انتظار',
-                        approved: 'تایید شده',
-                        active: 'فعال',
-                        expired: 'منقضی'
-                    } [ad.status] || ad.status;
-
-                    const badgeClass = {
-                        pending: 'status-pending',
-                        approved: 'status-approved',
-                        active: 'status-active',
-                        expired: 'status-expired'
-                    } [ad.status] || 'status-pending';
-
-                    const hasReceipt = ad.receipt_image ? true : false;
-
-                    html += `
-                        <tr>
-                            <td>${idx+1}</td>
-                            <td><strong>${ad.code}</strong></td>
-                            <td>${escapeHtml(ad.fullname)}</td>
-                            <td>${escapeHtml(ad.email)}</td>
-                            <td>${escapeHtml(ad.product)}</td>
-                            <td>${ad.hours}h</td>
-                            <td>${ad.amount.toLocaleString()}</td>
-                            <td>
-                                ${hasReceipt ? `<img src="${ad.receipt_image}" class="admin-img" onclick="window.open(this.src)" />` : '—'}
-                                ${ad.method === 'telegram' ? '📱 تلگرام' : ''}
-                            </td>
-                            <td><span class="status-badge ${badgeClass}">${statusText}</span></td>
-                            <td>
-                                <div style="display:flex; flex-direction:column; gap:5px;">
-                                    ${ad.status === 'pending' ? `<button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#00b894;" onclick="approveAd('${ad.code}')">✅ تایید</button>` : ''}
-                                    ${ad.status === 'approved' ? `<button class="btn" style="padding:4px 10px; font-size:0.75rem; background:#6c63ff;" onclick="activateAd('${ad.code}')">▶️ فعال کن</button>` : ''}
-                                    <button class="btn btn-danger" style="padding:4px 10px; font-size:0.75rem;" onclick="deleteAd('${ad.code}')">🗑️</button>
-                                </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-
-                tbody.innerHTML = html;
-                $('adminCount').textContent = ads.length;
-            } catch (err) {
-                console.error('❌ خطا در loadAdminData:', err);
+            if (ads.length === 0) {
                 tbody.innerHTML =
-                    `<tr><td colspan="10" style="text-align:center; color:#ff6b6b;">❌ خطا در بارگذاری داده‌ها</td></tr>`;
+                    `<tr><td colspan="10" style="text-align:center; color:rgba(255,255,255,0.4);">📭 هیچ تبلیغی ثبت نشده است.</td></tr>`;
+                $('adminCount').textContent = '0';
+                return;
             }
+
+            ads.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            let html = '';
+            ads.forEach((ad, idx) => {
+                const statusText = {
+                    pending: 'در انتظار',
+                    approved: 'تایید شده',
+                    active: 'فعال',
+                    expired: 'منقضی'
+                } [ad.status] || ad.status;
+
+                const badgeClass = {
+                    pending: 'status-pending',
+                    approved: 'status-approved',
+                    active: 'status-active',
+                    expired: 'status-expired'
+                } [ad.status] || 'status-pending';
+
+                const hasReceipt = ad.receipt_image ? true : false;
+
+                html += `
+                    <tr>
+                        <td>${idx+1}</td>
+                        <td><strong>${ad.code}</strong></td>
+                        <td>${escapeHtml(ad.fullname)}</td>
+                        <td>${escapeHtml(ad.email)}</td>
+                        <td>${escapeHtml(ad.product)}</td>
+                        <td>${ad.hours}h</td>
+                        <td>${ad.amount.toLocaleString()}</td>
+                        <td>
+                            ${hasReceipt ? `<img src="${ad.receipt_image}" class="admin-img" onclick="window.open(this.src)" />` : '—'}
+                            ${ad.method === 'telegram' ? '📱 تلگرام' : ''}
+                        </td>
+                        <td><span class="status-badge ${badgeClass}">${statusText}</span></td>
+                        <td>
+                            <div style="display:flex; flex-direction:column; gap:5px;">
+                                ${ad.status === 'pending' ? `<button class="btn btn-sm btn-success" onclick="approveAd('${ad.code}')">✅ تایید</button>` : ''}
+                                ${ad.status === 'approved' ? `<button class="btn btn-sm" style="background:#6c63ff;" onclick="activateAd('${ad.code}')">▶️ فعال کن</button>` : ''}
+                                <button class="btn btn-sm btn-danger" onclick="deleteAd('${ad.code}')">🗑️</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            tbody.innerHTML = html;
+            $('adminCount').textContent = ads.length;
         }
 
         function escapeHtml(text) {
@@ -1186,83 +1222,72 @@
         // ============================================================
         window.approveAd = async function(code) {
             if (!confirm(`تایید تبلیغ با کد ${code}؟`)) return;
-            try {
-                const data = await fetchData();
-                const ads = data.ads || [];
-                const idx = ads.findIndex(a => a.code === code);
-                if (idx === -1) { showToast('❌ تبلیغ یافت نشد', 'error'); return; }
 
-                ads[idx].status = 'approved';
-                ads[idx].approved_at = new Date().toISOString();
-                ads[idx].notify_message =
-                    `✅ تبلیغ شما در تاریخ ${new Date().toLocaleString('fa-IR')} تایید شد و در صف قرار گرفت.`;
+            const data = await fetchData();
+            const ads = data.ads || [];
+            const idx = ads.findIndex(a => a.code === code);
+            if (idx === -1) { showToast('❌ تبلیغ یافت نشد', 'error'); return; }
 
-                const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
-                if (saved) {
-                    showToast('✅ تبلیغ تایید شد و در صف قرار گرفت', 'success');
-                    loadAdminData();
-                }
-            } catch (err) {
-                showToast('❌ خطا: ' + err.message, 'error');
+            ads[idx].status = 'approved';
+            ads[idx].approved_at = new Date().toISOString();
+            ads[idx].notify_message = `✅ تبلیغ شما در تاریخ ${new Date().toLocaleString('fa-IR')} تایید شد و در صف قرار گرفت.`;
+
+            const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
+            if (saved) {
+                showToast('✅ تبلیغ تایید شد و در صف قرار گرفت', 'success');
+                loadAdminData();
             }
         };
 
         window.activateAd = async function(code) {
             if (!confirm(`فعال کردن تبلیغ با کد ${code}؟`)) return;
-            try {
-                const data = await fetchData();
-                const ads = data.ads || [];
 
-                const now = Date.now();
-                let startTime = now;
+            const data = await fetchData();
+            const ads = data.ads || [];
 
-                const activeOrApproved = ads.filter(a => a.status === 'active' || a.status === 'approved');
-                if (activeOrApproved.length > 0) {
-                    const lastEnd = activeOrApproved.reduce((max, a) => {
-                        const end = a.end_time ? new Date(a.end_time).getTime() : 0;
-                        return Math.max(max, end);
-                    }, 0);
-                    if (lastEnd > now) {
-                        startTime = lastEnd;
-                    }
+            const now = Date.now();
+            let startTime = now;
+
+            const activeOrApproved = ads.filter(a => a.status === 'active' || a.status === 'approved');
+            if (activeOrApproved.length > 0) {
+                const lastEnd = activeOrApproved.reduce((max, a) => {
+                    const end = a.end_time ? new Date(a.end_time).getTime() : 0;
+                    return Math.max(max, end);
+                }, 0);
+                if (lastEnd > now) {
+                    startTime = lastEnd;
                 }
+            }
 
-                const idx = ads.findIndex(a => a.code === code);
-                if (idx === -1) { showToast('❌ تبلیغ یافت نشد', 'error'); return; }
+            const idx = ads.findIndex(a => a.code === code);
+            if (idx === -1) { showToast('❌ تبلیغ یافت نشد', 'error'); return; }
 
-                const ad = ads[idx];
-                const endTime = startTime + (ad.hours * 3600 * 1000);
+            const ad = ads[idx];
+            const endTime = startTime + (ad.hours * 3600 * 1000);
 
-                ad.status = 'active';
-                ad.start_time = new Date(startTime).toISOString();
-                ad.end_time = new Date(endTime).toISOString();
-                ad.notify_message =
-                    `✅ تبلیغ شما از ${new Date(startTime).toLocaleString('fa-IR')} فعال شد و تا ${new Date(endTime).toLocaleString('fa-IR')} نمایش داده می‌شود.`;
+            ad.status = 'active';
+            ad.start_time = new Date(startTime).toISOString();
+            ad.end_time = new Date(endTime).toISOString();
+            ad.notify_message = `✅ تبلیغ شما از ${new Date(startTime).toLocaleString('fa-IR')} فعال شد و تا ${new Date(endTime).toLocaleString('fa-IR')} نمایش داده می‌شود.`;
 
-                const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
-                if (saved) {
-                    showToast('✅ تبلیغ فعال شد', 'success');
-                    loadAdminData();
-                }
-            } catch (err) {
-                showToast('❌ خطا: ' + err.message, 'error');
+            const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
+            if (saved) {
+                showToast('✅ تبلیغ فعال شد', 'success');
+                loadAdminData();
             }
         };
 
         window.deleteAd = async function(code) {
             if (!confirm(`آیا از حذف تبلیغ با کد ${code} مطمئن هستید؟`)) return;
-            try {
-                const data = await fetchData();
-                let ads = data.ads || [];
-                ads = ads.filter(a => a.code !== code);
 
-                const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
-                if (saved) {
-                    showToast('✅ تبلیغ حذف شد', 'success');
-                    loadAdminData();
-                }
-            } catch (err) {
-                showToast('❌ خطا: ' + err.message, 'error');
+            const data = await fetchData();
+            let ads = data.ads || [];
+            ads = ads.filter(a => a.code !== code);
+
+            const saved = await saveData({ ads, usedCodes: data.usedCodes || [] });
+            if (saved) {
+                showToast('✅ تبلیغ حذف شد', 'success');
+                loadAdminData();
             }
         };
 
@@ -1277,32 +1302,27 @@
         //  بروزرسانی خودکار وضعیت‌ها
         // ============================================================
         async function autoUpdateStatus() {
-            try {
-                const data = await fetchData();
-                const ads = data.ads || [];
-                let changed = false;
+            const data = await fetchData();
+            const ads = data.ads || [];
+            let changed = false;
 
-                const now = Date.now();
-                ads.forEach(ad => {
-                    if (ad.status === 'active' && ad.end_time) {
-                        const end = new Date(ad.end_time).getTime();
-                        if (now > end) {
-                            ad.status = 'expired';
-                            ad.notify_message =
-                                `⏰ تبلیغ شما در ${new Date(end).toLocaleString('fa-IR')} به پایان رسید.`;
-                            changed = true;
-                        }
-                    }
-                });
-
-                if (changed) {
-                    await saveData({ ads, usedCodes: data.usedCodes || [] });
-                    if ($('adminPanel').classList.contains('active')) {
-                        loadAdminData();
+            const now = Date.now();
+            ads.forEach(ad => {
+                if (ad.status === 'active' && ad.end_time) {
+                    const end = new Date(ad.end_time).getTime();
+                    if (now > end) {
+                        ad.status = 'expired';
+                        ad.notify_message = `⏰ تبلیغ شما در ${new Date(end).toLocaleString('fa-IR')} به پایان رسید.`;
+                        changed = true;
                     }
                 }
-            } catch (err) {
-                console.error('❌ خطا در autoUpdateStatus:', err);
+            });
+
+            if (changed) {
+                await saveData({ ads, usedCodes: data.usedCodes || [] });
+                if ($('adminPanel').classList.contains('active')) {
+                    loadAdminData();
+                }
             }
         }
 
@@ -1310,21 +1330,21 @@
         setTimeout(autoUpdateStatus, 5000);
 
         // ============================================================
-        //  بارگذاری اولیه
+        //  تست اتصال
         // ============================================================
-        console.log('✅ سیستم ثبت تبلیغات روزیک');
+        console.log('✅ سیستم ثبت تبلیغات روزیک با کلیدهای جدید');
         console.log('🔐 پنل مدیریت: ۴ کلیک روی دکمه پایین + رمز 2025');
         console.log('📌 Bin ID:', JSONBIN_BIN_ID);
+        console.log('📌 برای تست اتصال: fetchData().then(d=>console.log(d))');
 
-        // تست اتصال در کنسول
-        (async function testConnection() {
-            try {
-                const data = await fetchData();
-                console.log('✅ اتصال به JSONBin موفق:', data);
-            } catch (err) {
-                console.error('❌ اتصال به JSONBin ناموفق:', err);
+        // تست خودکار اتصال
+        setTimeout(async () => {
+            const test = await fetchData();
+            if (test.ads !== undefined) {
+                console.log('✅ اتصال به JSONBin برقرار است');
+                showToast('✅ اتصال به سرور برقرار شد', 'success');
             }
-        })();
+        }, 2000);
     </script>
 
 </body>
